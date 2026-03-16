@@ -10,28 +10,12 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const MyHomePage(),
     );
@@ -47,6 +31,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<User> users = [];
+
   @override
   void initState() {
     super.initState();
@@ -60,33 +45,150 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Crud Operations with Apis")),
-      body: ListView.builder(itemCount: users.length,itemBuilder: (context,index){
-      return ListTile(
-        leading: CircleAvatar(child: Icon(Icons.person),),
-        title: Text(users[index].name)  ,
-        subtitle: Text("${users[index].age}"),
-        trailing: SizedBox(
-          width: 100,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(onPressed: () {},icon: Icon(Icons.edit),),
-              IconButton(onPressed: (){}, icon: Icon(Icons.delete),),
-            ],
-          ),
+      appBar: AppBar(title: const Text("User Crud Operations with APIs")),
+      body: ListView.builder(
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: const CircleAvatar(child: Icon(Icons.person)),
+            title: Text(users[index].name),
+            subtitle: Text(users[index].age.toString()),
+            trailing: SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              UpdateUser(user: users[index]),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit),
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      await UserServices.deleteuser(users[index].id);
+                      fetchuser();
+                    },
+                    icon: const Icon(Icons.delete),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddUser(fetchusers: fetchuser),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class AddUser extends StatelessWidget {
+  final Function fetchusers;
+
+  AddUser({required this.fetchusers, super.key});
+
+  final TextEditingController namecontroller = TextEditingController();
+  final TextEditingController agecontroller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Add User")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: namecontroller,
+              decoration: const InputDecoration(labelText: "Name"),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: agecontroller,
+              decoration: const InputDecoration(labelText: "Age"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final name = namecontroller.text;
+                final age1 = int.parse(agecontroller.text);
+
+                await UserServices.adduser(name, age1);
+                fetchusers();
+                Navigator.pop(context);
+              },
+              child: const Text("Add User"),
+            ),
+          ],
         ),
-      );
-   },
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () {
-        
-      },
-      child: Icon(Icons.add),
-    ),
+      ),
+    );
+  }
+}
+
+class UpdateUser extends StatelessWidget {
+  final User user;
+
+  UpdateUser({required this.user, super.key});
+
+  final TextEditingController namecontroller = TextEditingController();
+  final TextEditingController agecontroller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    namecontroller.text = user.name;
+    agecontroller.text = user.age.toString();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Update User")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: namecontroller,
+              decoration: const InputDecoration(labelText: "Name"),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: agecontroller,
+              decoration: const InputDecoration(labelText: "Age"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final name = namecontroller.text;
+                final age1 = int.parse(agecontroller.text);
+
+                await UserServices.updateuser(user.id, name, age1);
+                Navigator.pop(context);
+              },
+              child: const Text("Update User"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
